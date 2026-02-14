@@ -2961,7 +2961,7 @@ public class Plot {
                     tagBuilder.tag("creationdate", Tag.inserting(Component.text(newDate)));
                     tagBuilder.tag("build", Tag.inserting(Component.text(build)));
                     tagBuilder.tag("size", Tag.inserting(Component.text(getConnectedPlots().size())));
-                    String component = iInfo.getComponent(player);
+                    String component = CaptionUtility.legacyToMiniMessage(iInfo.getComponent(player));
                     if (component.contains("<rating>") || component.contains("<likes>")) {
                         TaskManager.runTaskAsync(() -> {
                             if (Settings.Ratings.USE_LIKES) {
@@ -3003,7 +3003,7 @@ public class Plot {
                             }
                             future.complete(StaticCaption.of(MINI_MESSAGE.serialize(MINI_MESSAGE
                                     .deserialize(
-                                            iInfo.getComponent(player),
+                                            component,
                                             tagBuilder.build()
                                     ))));
                         });
@@ -3011,7 +3011,7 @@ public class Plot {
                     }
                     future.complete(StaticCaption.of(MINI_MESSAGE.serialize(MINI_MESSAGE
                             .deserialize(
-                                    iInfo.getComponent(player),
+                                    component,
                                     tagBuilder.build()
                             ))));
                 }

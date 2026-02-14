@@ -153,6 +153,7 @@ public class ConsolePlayer extends PlotPlayer<Actor> {
         message = CaptionUtility.format(this, message)
                 .replace('\u2010', '%').replace('\u2020', '&').replace('\u2030', '&')
                 .replace("<prefix>", TranslatableCaption.of("core.prefix").getComponent(this));
+        message = CaptionUtility.legacyToMiniMessage(message);
         // Parse the message
         PlotSquared.platform().consoleAudience().sendMessage(MINI_MESSAGE.deserialize(message, replacements));
     }

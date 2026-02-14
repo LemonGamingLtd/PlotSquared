@@ -32,6 +32,7 @@ import net.kyori.adventure.text.minimessage.ParsingException;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -41,6 +42,32 @@ import static com.plotsquared.core.configuration.caption.ComponentTransform.stri
 public class CaptionUtility {
 
     private static final Pattern LEGACY_FORMATTING = Pattern.compile("§[a-gklmnor0-9]");
+    private static final Pattern LEGACY_AMPERSAND = Pattern.compile("&([0-9a-fk-or])", Pattern.CASE_INSENSITIVE);
+
+    private static final Map<Character, String> LEGACY_TO_MINIMESSAGE = Map.ofEntries(
+            Map.entry('0', "<black>"),
+            Map.entry('1', "<dark_blue>"),
+            Map.entry('2', "<dark_green>"),
+            Map.entry('3', "<dark_aqua>"),
+            Map.entry('4', "<dark_red>"),
+            Map.entry('5', "<dark_purple>"),
+            Map.entry('6', "<gold>"),
+            Map.entry('7', "<gray>"),
+            Map.entry('8', "<dark_gray>"),
+            Map.entry('9', "<blue>"),
+            Map.entry('a', "<green>"),
+            Map.entry('b', "<aqua>"),
+            Map.entry('c', "<red>"),
+            Map.entry('d', "<light_purple>"),
+            Map.entry('e', "<yellow>"),
+            Map.entry('f', "<white>"),
+            Map.entry('k', "<obfuscated>"),
+            Map.entry('l', "<bold>"),
+            Map.entry('m', "<strikethrough>"),
+            Map.entry('n', "<underlined>"),
+            Map.entry('o', "<italic>"),
+            Map.entry('r', "<reset>")
+    );
 
     // flags which values are parsed by minimessage
     private static final Set<Class<? extends PlotFlag<?, ?>>> MINI_MESSAGE_FLAGS = Set.of(
@@ -58,6 +85,26 @@ public class CaptionUtility {
             )
     );
 
+
+    /**
+     * Converts legacy Minecraft ampersand color codes (e.g., &amp;b, &amp;f) to MiniMessage format.
+     * This allows users to use traditional Minecraft formatting codes in flags like greeting and farewell.
+     *
+     * @param message The message containing legacy ampersand color codes
+     * @return The message with legacy codes converted to MiniMessage tags
+     * @since 7.3.14
+     */
+    public static @NonNull String legacyToMiniMessage(final @NonNull String message) {
+        java.util.regex.Matcher matcher = LEGACY_AMPERSAND.matcher(message);
+        StringBuilder result = new StringBuilder();
+        while (matcher.find()) {
+            char code = Character.toLowerCase(matcher.group(1).charAt(0));
+            String replacement = LEGACY_TO_MINIMESSAGE.getOrDefault(code, matcher.group());
+            matcher.appendReplacement(result, java.util.regex.Matcher.quoteReplacement(replacement));
+        }
+        matcher.appendTail(result);
+        return result.toString();
+    }
 
     /**
      * Format a chat message but keep the formatting keys

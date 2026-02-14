@@ -921,9 +921,11 @@ public abstract class PlotPlayer<P> implements CommandCaller, OfflinePlotPlayer,
             final int fadeIn, final int stay, final int fadeOut,
             final @NonNull TagResolver... replacements
     ) {
-        final Component titleComponent = MiniMessage.miniMessage().deserialize(title.getComponent(this), replacements);
+        final Component titleComponent = MiniMessage.miniMessage().deserialize(
+                CaptionUtility.legacyToMiniMessage(title.getComponent(this)), replacements);
         final Component subtitleComponent =
-                MiniMessage.miniMessage().deserialize(subtitle.getComponent(this), replacements);
+                MiniMessage.miniMessage().deserialize(
+                        CaptionUtility.legacyToMiniMessage(subtitle.getComponent(this)), replacements);
         final Title.Times times = Title.Times.times(
                 Duration.of(Settings.Titles.TITLES_FADE_IN * 50L, ChronoUnit.MILLIS),
                 Duration.of(Settings.Titles.TITLES_STAY * 50L, ChronoUnit.MILLIS),
@@ -960,6 +962,7 @@ public abstract class PlotPlayer<P> implements CommandCaller, OfflinePlotPlayer,
                 .replace('\u2010', '%').replace('\u2020', '&').replace('\u2030', '&')
                 .replace("<prefix>", TranslatableCaption.of("core.prefix").getComponent(this));
 
+        message = CaptionUtility.legacyToMiniMessage(message);
 
         final Component component = MiniMessage.miniMessage().deserialize(message, replacements);
         getAudience().sendActionBar(component);
@@ -986,6 +989,7 @@ public abstract class PlotPlayer<P> implements CommandCaller, OfflinePlotPlayer,
         message = CaptionUtility.format(this, message)
                 .replace('\u2010', '%').replace('\u2020', '&').replace('\u2030', '&')
                 .replace("<prefix>", TranslatableCaption.of("core.prefix").getComponent(this));
+        message = CaptionUtility.legacyToMiniMessage(message);
         // Parse the message
         final Component component = MiniMessage.miniMessage().deserialize(message, replacements);
         if (!Objects.equal(component, this.getMeta("lastMessage"))
