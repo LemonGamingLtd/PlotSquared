@@ -1755,6 +1755,20 @@ public class PlayerEventListener implements Listener {
                 flagContainer = plot.getFlagContainer();
             }
 
+            ItemStack hand = p.getInventory().getItem(event.getHand());
+            if (hand != null) {
+                Material handType = hand.getType();
+                boolean isSpawnEgg = PaperLib.isPaper()
+                        ? MaterialTags.SPAWN_EGGS.isTagged(handType)
+                        : handType.toString().toLowerCase().endsWith("_spawn_egg");
+                if (isSpawnEgg) {
+                    if (!this.eventDispatcher.checkPlayerBlockEvent(pp, PlayerBlockEventType.SPAWN_MOB, location, null, true)) {
+                        event.setCancelled(true);
+                    }
+                    return;
+                }
+            }
+
             if (EntityCategories.HOSTILE.contains(entityType) && flagContainer
                     .getFlag(HostileInteractFlag.class).getValue()) {
                 return;
