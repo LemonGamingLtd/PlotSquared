@@ -217,6 +217,20 @@ public class ConsolePlayer extends PlotPlayer<Actor> {
     }
 
     @Override
+    public void setTime(long time, boolean relative) {
+    }
+
+    @Override
+    public long getTime() {
+        return 0;
+    }
+
+    @Override
+    public boolean isTimeRelative() {
+        return true;
+    }
+
+    @Override
     public boolean getFlight() {
         return true;
     }

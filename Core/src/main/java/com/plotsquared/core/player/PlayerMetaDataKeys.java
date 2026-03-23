@@ -64,6 +64,10 @@ public final class PlayerMetaDataKeys {
     });
     public static final MetaDataKey<CmdInstance> TEMPORARY_CONFIRM = MetaDataKey.of("cmdConfirm", new TypeLiteral<>() {
     });
+    public static final MetaDataKey<Long> TEMPORARY_TIME = MetaDataKey.of("playerTime", new TypeLiteral<>() {
+    });
+    public static final MetaDataKey<Boolean> TEMPORARY_TIME_RELATIVE = MetaDataKey.of("playerTimeRelative", new TypeLiteral<>() {
+    });
     //@formatter:on
 
     private PlayerMetaDataKeys() {

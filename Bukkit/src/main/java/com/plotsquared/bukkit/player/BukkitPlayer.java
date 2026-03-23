@@ -301,6 +301,21 @@ public class BukkitPlayer extends PlotPlayer<Player> {
     }
 
     @Override
+    public void setTime(final long time, final boolean relative) {
+        this.player.setPlayerTime(time, relative);
+    }
+
+    @Override
+    public long getTime() {
+        return this.player.getPlayerTimeOffset();
+    }
+
+    @Override
+    public boolean isTimeRelative() {
+        return this.player.isPlayerTimeRelative();
+    }
+
+    @Override
     public boolean getFlight() {
         return player.getAllowFlight();
     }

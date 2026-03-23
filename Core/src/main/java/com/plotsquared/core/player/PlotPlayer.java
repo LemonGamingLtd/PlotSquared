@@ -591,6 +591,29 @@ public abstract class PlotPlayer<P> implements CommandCaller, OfflinePlotPlayer,
     public abstract void setTime(long time);
 
     /**
+     * Set this player's local time with relative mode.
+     *
+     * @param time     the time visible to the player
+     * @param relative if true, time is relative to world time; if false, time is fixed
+     */
+    public abstract void setTime(long time, boolean relative);
+
+    /**
+     * Get this player's local time (ticks).
+     *
+     * @return the player's time
+     */
+    public abstract long getTime();
+
+    /**
+     * Check if this player's time is relative to the world time.
+     * When false, the player has a custom fixed time.
+     *
+     * @return {@code true} if player time follows world time, {@code false} if fixed
+     */
+    public abstract boolean isTimeRelative();
+
+    /**
      * Determines whether or not the player can fly.
      *
      * @return {@code true} if the player is allowed to fly

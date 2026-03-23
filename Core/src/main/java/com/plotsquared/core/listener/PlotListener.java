@@ -254,6 +254,18 @@ public class PlotListener {
             long time = plot.getFlag(TimeFlag.class);
             if (time != TimeFlag.TIME_DISABLED.getValue() && !player.getAttribute("disabletime")) {
                 try {
+                    long currentTimeOffset = player.getTime();
+                    boolean isRelative = player.isTimeRelative();
+
+                    try (final MetaDataAccess<Long> timeAccess =
+                                 player.accessTemporaryMetaData(PlayerMetaDataKeys.TEMPORARY_TIME);
+                         final MetaDataAccess<Boolean> relativeAccess =
+                                 player.accessTemporaryMetaData(PlayerMetaDataKeys.TEMPORARY_TIME_RELATIVE)) {
+                        if (timeAccess.get().isEmpty()) {
+                            timeAccess.set(currentTimeOffset);
+                            relativeAccess.set(isRelative);
+                        }
+                    }
                     player.setTime(time);
                 } catch (Exception ignored) {
                     PlotFlag<?, ?> plotFlag =
@@ -384,6 +396,23 @@ public class PlotListener {
                 });
             }
 
+            if (plot.getFlag(TimeFlag.class) != TimeFlag.TIME_DISABLED.getValue().longValue()) {
+                try (final MetaDataAccess<Long> timeAccess =
+                             player.accessTemporaryMetaData(PlayerMetaDataKeys.TEMPORARY_TIME);
+                     final MetaDataAccess<Boolean> relativeAccess =
+                             player.accessTemporaryMetaData(PlayerMetaDataKeys.TEMPORARY_TIME_RELATIVE)) {
+                    final Optional<Long> storedTimeOffset = timeAccess.get();
+                    final Optional<Boolean> storedRelative = relativeAccess.get();
+                    if (storedTimeOffset.isPresent() && storedRelative.isPresent()) {
+                        player.setTime(storedTimeOffset.get(), storedRelative.get());
+                        timeAccess.remove();
+                        relativeAccess.remove();
+                    } else {
+                        player.setTime(Long.MAX_VALUE);
+                    }
+                }
+            }
+
             if (plot.hasOwner()) {
                 PlotArea pw = plot.getArea();
                 if (pw == null) {
@@ -467,10 +496,6 @@ public class PlotListener {
                             }
                         }
                     }
-                }
-
-                if (plot.getFlag(TimeFlag.class) != TimeFlag.TIME_DISABLED.getValue().longValue()) {
-                    player.setTime(Long.MAX_VALUE);
                 }
 
                 final PlotWeather plotWeather = plot.getFlag(WeatherFlag.class);
