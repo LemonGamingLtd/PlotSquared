@@ -133,6 +133,18 @@ public class Condense extends SubCommand {
                         }
                         final Runnable task = this;
                         final Plot origin = allPlots.remove(0);
+                        final String originId = origin.toString();
+                        if (!isWithinSafeEditRegion(origin)) {
+                            player.sendMessage(
+                                    TranslatableCaption.of("condense.skipping"),
+                                    TagResolver.resolver(
+                                            "plot",
+                                            Tag.inserting(Component.text(originId + " (outside safe edit region)"))
+                                    )
+                            );
+                            TaskManager.runTaskLater(task, TaskTime.ticks(1L));
+                            return;
+                        }
                         int i = 0;
                         while (free.size() > i) {
                             final Plot possible = origin.getArea().getPlotAbs(free.get(i));
@@ -145,7 +157,6 @@ public class Condense extends SubCommand {
                                 continue;
                             }
                             i++;
-                            final String originId = origin.toString();
                             final String destinationId = possible.toString();
                             final AtomicBoolean result = new AtomicBoolean(false);
                             try {
@@ -342,6 +353,11 @@ public class Condense extends SubCommand {
 
     private boolean isOutsideRadius(final PlotId id, final int radius) {
         return id.getX() > radius || id.getX() < -radius || id.getY() > radius || id.getY() < -radius;
+    }
+
+    private boolean isWithinSafeEditRegion(final Plot plot) {
+        final com.plotsquared.core.location.Location[] corners = plot.getCorners();
+        return WorldUtil.isValidLocation(corners[0]) && WorldUtil.isValidLocation(corners[1]);
     }
 
 }
