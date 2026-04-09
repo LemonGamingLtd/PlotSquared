@@ -36,8 +36,8 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -103,59 +103,18 @@ public class Condense extends SubCommand {
                 }
                 int radius = Integer.parseInt(args[2]);
 
-                final List<Plot> plots = new ArrayList<>(area.getPlots());
-                // remove non base plots
-                Iterator<Plot> iterator = plots.iterator();
-                int maxSize = 0;
-                ArrayList<Integer> sizes = new ArrayList<>();
-                while (iterator.hasNext()) {
-                    Plot plot = iterator.next();
-                    if (!plot.isBasePlot()) {
-                        iterator.remove();
-                        continue;
-                    }
-                    int size = plot.getConnectedPlots().size();
-                    if (size > maxSize) {
-                        maxSize = size;
-                    }
-                    sizes.add(size - 1);
-                }
-                // Sort plots by size (buckets?)]
-                ArrayList<Plot>[] buckets = new ArrayList[maxSize];
-                for (int i = 0; i < plots.size(); i++) {
-                    Plot plot = plots.get(i);
-                    int size = sizes.get(i);
-                    ArrayList<Plot> array = buckets[size];
-                    if (array == null) {
-                        array = new ArrayList<>();
-                        buckets[size] = array;
-                    }
-                    array.add(plot);
-                }
-                final ArrayList<Plot> allPlots = new ArrayList<>(plots.size());
-                for (int i = buckets.length - 1; i >= 0; i--) {
-                    ArrayList<Plot> array = buckets[i];
-                    if (array != null) {
-                        allPlots.addAll(array);
-                    }
-                }
-                int size = allPlots.size();
+                final Collection<Plot> claimedPlots = area.getPlots();
+                int size = claimedPlots.size();
                 int minimumRadius = (int) Math.ceil(Math.sqrt(size) / 2 + 1);
                 if (radius < minimumRadius) {
                     player.sendMessage(TranslatableCaption.of("condense.radius_too_small"));
                     return false;
                 }
-                List<PlotId> toMove = new ArrayList<>(getPlots(allPlots, radius));
-                final List<PlotId> free = new ArrayList<>();
-                PlotId start = PlotId.of(0, 0);
-                while (start.getX() <= minimumRadius && start.getY() <= minimumRadius) {
-                    Plot plot = area.getPlotAbs(start);
-                    if (plot != null && !plot.hasOwner()) {
-                        free.add(plot.getId());
-                    }
-                    start = start.getNextId();
-                }
-                if (free.isEmpty() || toMove.isEmpty()) {
+                final ArrayList<Plot> allPlots = getOrderedBasePlots(claimedPlots);
+                allPlots.removeIf(plot -> !isOutsideRadius(plot, radius));
+
+                final List<PlotId> free = getFreePlots(area, radius);
+                if (free.isEmpty() || allPlots.isEmpty()) {
                     player.sendMessage(TranslatableCaption.of("condense.no_free_plots_found"));
                     return false;
                 }
@@ -177,20 +136,28 @@ public class Condense extends SubCommand {
                         int i = 0;
                         while (free.size() > i) {
                             final Plot possible = origin.getArea().getPlotAbs(free.get(i));
-                            if (possible.hasOwner()) {
+                            if (possible == null || possible.hasOwner()) {
                                 free.remove(i);
                                 continue;
                             }
+                            if (!canMoveToRadius(origin, possible, radius)) {
+                                i++;
+                                continue;
+                            }
                             i++;
+                            final String originId = origin.toString();
+                            final String destinationId = possible.toString();
                             final AtomicBoolean result = new AtomicBoolean(false);
                             try {
                                 result.set(origin.getPlotModificationManager().move(possible, player, () -> {
                                     if (result.get()) {
+                                        markDestinationOccupied(origin, possible, free);
+                                        addFreedPlots(origin, radius, free);
                                         player.sendMessage(
                                                 TranslatableCaption.of("condense.moving"),
                                                 TagResolver.builder()
-                                                        .tag("origin", Tag.inserting(Component.text(origin.toString())))
-                                                        .tag("possible", Tag.inserting(Component.text(possible.toString())))
+                                                        .tag("origin", Tag.inserting(Component.text(originId)))
+                                                        .tag("possible", Tag.inserting(Component.text(destinationId)))
                                                         .build()
                                         );
                                         TaskManager.runTaskLater(task, TaskTime.ticks(1L));
@@ -213,6 +180,7 @@ public class Condense extends SubCommand {
                                     TranslatableCaption.of("condense.skipping"),
                                     TagResolver.resolver("plot", Tag.inserting(Component.text(origin.toString())))
                             );
+                            TaskManager.runTaskLater(task, TaskTime.ticks(1L));
                         }
                     }
                 };
@@ -289,12 +257,91 @@ public class Condense extends SubCommand {
     public Set<PlotId> getPlots(Collection<Plot> plots, int radius) {
         HashSet<PlotId> outside = new HashSet<>();
         for (Plot plot : plots) {
-            if (plot.getId().getX() > radius || plot.getId().getX() < -radius || plot.getId().getY() > radius
-                    || plot.getId().getY() < -radius) {
+            if (isOutsideRadius(plot.getId(), radius)) {
                 outside.add(plot.getId());
             }
         }
         return outside;
+    }
+
+    private ArrayList<Plot> getOrderedBasePlots(final Collection<Plot> plots) {
+        final ArrayList<Plot> basePlots = new ArrayList<>();
+        for (final Plot plot : plots) {
+            if (plot.isBasePlot()) {
+                basePlots.add(plot);
+            }
+        }
+        basePlots.sort(Comparator.comparingInt((Plot plot) -> plot.getConnectedPlots().size()).reversed());
+        return basePlots;
+    }
+
+    private List<PlotId> getFreePlots(final PlotArea area, final int radius) {
+        final List<PlotId> free = new ArrayList<>();
+        PlotId current = PlotId.of(0, 0);
+        while (current.getX() <= radius && current.getY() <= radius) {
+            final Plot plot = area.getPlotAbs(current);
+            if (plot != null && !plot.hasOwner()) {
+                free.add(plot.getId());
+            }
+            current = current.getNextId();
+        }
+        return free;
+    }
+
+    private boolean canMoveToRadius(final Plot origin, final Plot destination, final int radius) {
+        final PlotId offset = PlotId.of(
+                destination.getId().getX() - origin.getId().getX(),
+                destination.getId().getY() - origin.getId().getY()
+        );
+        for (final Plot connected : origin.getConnectedPlots()) {
+            final PlotId translated = PlotId.of(
+                    connected.getId().getX() + offset.getX(),
+                    connected.getId().getY() + offset.getY()
+            );
+            if (isOutsideRadius(translated, radius)) {
+                return false;
+            }
+            final Plot translatedPlot = origin.getArea().getPlotAbs(translated);
+            if (translatedPlot == null) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void markDestinationOccupied(final Plot origin, final Plot destination, final List<PlotId> free) {
+        final PlotId offset = PlotId.of(
+                destination.getId().getX() - origin.getId().getX(),
+                destination.getId().getY() - origin.getId().getY()
+        );
+        for (final Plot connected : origin.getConnectedPlots()) {
+            free.remove(PlotId.of(
+                    connected.getId().getX() + offset.getX(),
+                    connected.getId().getY() + offset.getY()
+            ));
+        }
+    }
+
+    private void addFreedPlots(final Plot origin, final int radius, final List<PlotId> free) {
+        for (final Plot connected : origin.getConnectedPlots()) {
+            final PlotId id = connected.getId();
+            if (!isOutsideRadius(id, radius) && !free.contains(id)) {
+                free.add(id);
+            }
+        }
+    }
+
+    private boolean isOutsideRadius(final Plot plot, final int radius) {
+        for (final Plot connected : plot.getConnectedPlots()) {
+            if (isOutsideRadius(connected.getId(), radius)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isOutsideRadius(final PlotId id, final int radius) {
+        return id.getX() > radius || id.getX() < -radius || id.getY() > radius || id.getY() < -radius;
     }
 
 }

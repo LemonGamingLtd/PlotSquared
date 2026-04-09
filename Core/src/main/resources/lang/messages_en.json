@@ -248,7 +248,7 @@
   "condense.task_complete": "<prefix><gold>Task complete. Please verify that no new plots have been claimed during the task.</gold>",
   "condense.moving": "<gold>Moving: </gold><gray><origin></gray><gold> -> </gold><green><possible></green>",
   "condense.task_failed": "<prefix><red>Task failed. No free plots found.</red>",
-  "condense.skipping": "<prefix><red>Skipping complex plot: </red><gold><plot></gold><red>.</red>",
+  "condense.skipping": "<prefix><red>Skipping plot group with no valid destination: </red><gold><plot></gold><red>.</red>",
   "condense.task_stopped": "<prefix><gold>Task already stopped.</gold>",
   "condense.default_eval": "<dark_gray><strikethrough>=== <reset> <gold>DEFAULT EVAL </gold><dark_gray><strikethrough>===</dark_gray>",
   "condense.minimum_radius": "<gold>Minimum radius: </gold><gray><minimum_radius></gray>",
