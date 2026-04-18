@@ -18,8 +18,6 @@
  */
 package com.plotsquared.core.command;
 
-import com.plotsquared.core.PlotSquared;
-import com.plotsquared.core.configuration.Settings;
 import com.plotsquared.core.configuration.caption.TranslatableCaption;
 import com.plotsquared.core.permissions.Permission;
 import com.plotsquared.core.player.PlotPlayer;
@@ -34,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeoutException;
 
 @CommandDeclaration(command = "alias",
         permission = "plots.alias",
@@ -158,30 +155,11 @@ public class Alias extends SubCommand {
                 );
                 return;
             }
-            if (Settings.UUID.OFFLINE) {
-                plot.setAlias(alias);
-                player.sendMessage(
-                        TranslatableCaption.of("alias.alias_set_to"),
-                        TagResolver.resolver("alias", Tag.inserting(Component.text(alias)))
-                );
-                return;
-            }
-            PlotSquared.get().getImpromptuUUIDPipeline().getSingle(alias, ((uuid, throwable) -> {
-                if (throwable instanceof TimeoutException) {
-                    player.sendMessage(TranslatableCaption.of("players.fetching_players_timeout"));
-                } else if (uuid != null) {
-                    player.sendMessage(
-                            TranslatableCaption.of("alias.alias_is_taken"),
-                            TagResolver.resolver("alias", Tag.inserting(Component.text(alias)))
-                    );
-                } else {
-                    plot.setAlias(alias);
-                    player.sendMessage(
-                            TranslatableCaption.of("alias.alias_set_to"),
-                            TagResolver.resolver("alias", Tag.inserting(Component.text(alias)))
-                    );
-                }
-            }));
+            plot.setAlias(alias);
+            player.sendMessage(
+                    TranslatableCaption.of("alias.alias_set_to"),
+                    TagResolver.resolver("alias", Tag.inserting(Component.text(alias)))
+            );
         }
     }
 

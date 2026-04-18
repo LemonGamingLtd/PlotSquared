@@ -261,29 +261,12 @@ public class Visit extends Command {
                         if (throwable instanceof TimeoutException) {
                             // The request timed out
                             player.sendMessage(TranslatableCaption.of("players.fetching_players_timeout"));
-                        } else if (uuid != null && (Settings.Teleport.VISIT_MERGED_OWNERS
-                                ? !PlotQuery.newQuery().ownersInclude(uuid).anyMatch()
-                                : !PlotQuery.newQuery().ownedBy(uuid).anyMatch())) {
-                            // It was a valid UUID but the player has no plots
-                            player.sendMessage(TranslatableCaption.of("errors.player_no_plots"));
-                        } else if (uuid == null) {
-                            // player not found, so we assume it's an alias if no page was provided
-                            if (finalPage == Integer.MIN_VALUE) {
-                                this.visit(
-                                        player,
-                                        PlotQuery.newQuery().withAlias(finalArgs[0]),
-                                        player.getApplicablePlotArea(),
-                                        confirm,
-                                        whenDone,
-                                        1
-                                );
-                            } else {
-                                player.sendMessage(
-                                        TranslatableCaption.of("errors.invalid_player"),
-                                        TagResolver.resolver("value", Tag.inserting(Component.text(finalArgs[0])))
-                                );
-                            }
-                        } else {
+                            return;
+                        }
+                        boolean playerHasPlots = uuid != null && (Settings.Teleport.VISIT_MERGED_OWNERS
+                                ? PlotQuery.newQuery().ownersInclude(uuid).anyMatch()
+                                : PlotQuery.newQuery().ownedBy(uuid).anyMatch());
+                        if (playerHasPlots) {
                             this.visit(
                                     player,
                                     Settings.Teleport.VISIT_MERGED_OWNERS
@@ -293,6 +276,29 @@ public class Visit extends Command {
                                     confirm,
                                     whenDone,
                                     finalPage
+                            );
+                            return;
+                        }
+                        if (finalPage == Integer.MIN_VALUE) {
+                            PlotQuery aliasQuery = PlotQuery.newQuery().withAlias(finalArgs[0]);
+                            if (aliasQuery.anyMatch() || uuid == null) {
+                                this.visit(
+                                        player,
+                                        aliasQuery,
+                                        player.getApplicablePlotArea(),
+                                        confirm,
+                                        whenDone,
+                                        1
+                                );
+                                return;
+                            }
+                        }
+                        if (uuid != null) {
+                            player.sendMessage(TranslatableCaption.of("errors.player_no_plots"));
+                        } else {
+                            player.sendMessage(
+                                    TranslatableCaption.of("errors.invalid_player"),
+                                    TagResolver.resolver("value", Tag.inserting(Component.text(finalArgs[0])))
                             );
                         }
                     });
