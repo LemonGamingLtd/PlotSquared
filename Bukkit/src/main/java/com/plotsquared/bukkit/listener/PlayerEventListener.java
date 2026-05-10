@@ -47,6 +47,7 @@ import com.plotsquared.core.plot.flag.implementations.BlockedCmdsFlag;
 import com.plotsquared.core.plot.flag.implementations.ChatFlag;
 import com.plotsquared.core.plot.flag.implementations.DenyPortalTravelFlag;
 import com.plotsquared.core.plot.flag.implementations.DenyPortalsFlag;
+import com.plotsquared.core.plot.flag.implementations.DenySpearUseFlag;
 import com.plotsquared.core.plot.flag.implementations.DenyTeleportFlag;
 import com.plotsquared.core.plot.flag.implementations.DoneFlag;
 import com.plotsquared.core.plot.flag.implementations.DropProtectionFlag;
@@ -1212,6 +1213,42 @@ public class PlayerEventListener implements Listener {
                 }
             }
         }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onSpearUse(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) {
+            return;
+        }
+        ItemStack item = event.getItem();
+        if (item == null || !BukkitEntityUtil.isSpear(item)) {
+            return;
+        }
+        Player player = event.getPlayer();
+        BukkitPlayer pp = BukkitUtil.adapt(player);
+        PlotArea area = pp.getPlotAreaAbs();
+        if (area == null) {
+            return;
+        }
+        Block block = event.getClickedBlock();
+        Location location = block == null
+                ? BukkitUtil.adapt(player.getLocation())
+                : BukkitUtil.adapt(block.getLocation());
+        Plot plot = location.getOwnedPlot();
+        if (plot == null || !plot.hasOwner() || !plot.getFlag(DenySpearUseFlag.class) || plot.isAdded(pp.getUUID())
+                || pp.hasPermission(Permission.PERMISSION_ADMIN_INTERACT_OTHER)) {
+            return;
+        }
+        pp.sendMessage(
+                TranslatableCaption.of("permission.no_permission_event"),
+                TagResolver.resolver(
+                        "node",
+                        Tag.inserting(Permission.PERMISSION_ADMIN_INTERACT_OTHER)
+                )
+        );
+        plot.debug(player.getName() + " could not use a spear because deny-spear-use = true");
+        event.setCancelled(true);
+        event.setUseItemInHand(Event.Result.DENY);
     }
 
     @EventHandler(priority = EventPriority.LOW)

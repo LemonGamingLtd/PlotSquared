@@ -36,6 +36,7 @@ import com.plotsquared.core.plot.flag.implementations.CropGrowFlag;
 import com.plotsquared.core.plot.flag.implementations.DenyExitFlag;
 import com.plotsquared.core.plot.flag.implementations.DenyPortalTravelFlag;
 import com.plotsquared.core.plot.flag.implementations.DenyPortalsFlag;
+import com.plotsquared.core.plot.flag.implementations.DenySpearUseFlag;
 import com.plotsquared.core.plot.flag.implementations.DenyTeleportFlag;
 import com.plotsquared.core.plot.flag.implementations.DescriptionFlag;
 import com.plotsquared.core.plot.flag.implementations.DeviceInteractFlag;
@@ -156,6 +157,7 @@ public final class GlobalFlagContainer extends FlagContainer {
         this.addFlag(DenyExitFlag.DENY_EXIT_FLAG_FALSE);
         this.addFlag(DenyPortalsFlag.DENY_PORTALS_FALSE);
         this.addFlag(DenyPortalTravelFlag.DENY_PORTAL_TRAVEL_FALSE);
+        this.addFlag(DenySpearUseFlag.DENY_SPEAR_USE_TRUE);
         this.addFlag(DeviceInteractFlag.DEVICE_INTERACT_FALSE);
         this.addFlag(DisablePhysicsFlag.DISABLE_PHYSICS_FALSE);
         this.addFlag(DropProtectionFlag.DROP_PROTECTION_FALSE);

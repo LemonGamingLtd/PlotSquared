@@ -27,6 +27,7 @@ import com.plotsquared.core.plot.Plot;
 import com.plotsquared.core.plot.PlotArea;
 import com.plotsquared.core.plot.flag.implementations.AnimalAttackFlag;
 import com.plotsquared.core.plot.flag.implementations.AnimalCapFlag;
+import com.plotsquared.core.plot.flag.implementations.DenySpearUseFlag;
 import com.plotsquared.core.plot.flag.implementations.DoneFlag;
 import com.plotsquared.core.plot.flag.implementations.EntityCapFlag;
 import com.plotsquared.core.plot.flag.implementations.HangingBreakFlag;
@@ -53,6 +54,7 @@ import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.projectiles.BlockProjectileSource;
 import org.bukkit.projectiles.ProjectileSource;
 
@@ -156,6 +158,21 @@ public class BukkitEntityUtil {
         }
         if (player != null) {
             BukkitPlayer plotPlayer = BukkitUtil.adapt(player);
+
+            if (isPlot && plot != null && plot.hasOwner() && plot.getFlag(DenySpearUseFlag.class)
+                    && !plot.isAdded(plotPlayer.getUUID()) && isSpearAttack(player, damager)) {
+                if (!plotPlayer.hasPermission(Permission.PERMISSION_ADMIN_INTERACT_OTHER)) {
+                    plotPlayer.sendMessage(
+                            TranslatableCaption.of("permission.no_permission_event"),
+                            TagResolver.resolver(
+                                    "node",
+                                    Tag.inserting(Permission.PERMISSION_ADMIN_INTERACT_OTHER)
+                            )
+                    );
+                    plot.debug(player.getName() + " could not use a spear because deny-spear-use = true");
+                    return false;
+                }
+            }
 
             final com.sk89q.worldedit.world.entity.EntityType entityType;
 
@@ -351,6 +368,19 @@ public class BukkitEntityUtil {
         }
         return ((vplot != null && vplot.getFlag(PveFlag.class)) || !(damager instanceof Arrow
                 && !(victim instanceof Creature)));
+    }
+
+    public static boolean isHoldingSpear(Player player) {
+        return isSpear(player.getInventory().getItemInMainHand())
+                || isSpear(player.getInventory().getItemInOffHand());
+    }
+
+    private static boolean isSpearAttack(Player player, Entity damager) {
+        return isHoldingSpear(player) || "SPEAR".equals(damager.getType().name());
+    }
+
+    public static boolean isSpear(ItemStack itemStack) {
+        return "SPEAR".equals(itemStack.getType().name());
     }
 
     public static boolean checkEntity(Entity entity, Plot plot) {
