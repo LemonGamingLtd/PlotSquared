@@ -2683,10 +2683,10 @@ public class Plot {
             }, TaskTime.seconds(Settings.Teleport.DELAY));
             resultConsumer.accept(true);
         };
-        if (this.area.isHomeAllowNonmember() || plot.isAdded(player.getUUID())) {
-            this.getHome(locationConsumer);
+        if (plot.area.isHomeAllowNonmember() || plot.isAdded(player.getUUID())) {
+            plot.getHome(locationConsumer);
         } else {
-            this.getDefaultHome(false, locationConsumer);
+            plot.getDefaultHome(false, locationConsumer);
         }
     }
 
