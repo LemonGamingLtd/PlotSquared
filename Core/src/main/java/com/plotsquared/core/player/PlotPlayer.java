@@ -504,6 +504,18 @@ public abstract class PlotPlayer<P> implements CommandCaller, OfflinePlotPlayer,
     }
 
     /**
+     * Teleport this player to a location and report whether the platform accepted the teleport.
+     *
+     * @param location the target location
+     * @param cause    the cause of the teleport
+     * @return future completed with {@code true} if the teleport was accepted
+     */
+    public @NonNull CompletableFuture<Boolean> teleportAsync(Location location, TeleportCause cause) {
+        teleport(location, cause);
+        return CompletableFuture.completedFuture(true);
+    }
+
+    /**
      * Teleport this player to a location.
      *
      * @param location the target location

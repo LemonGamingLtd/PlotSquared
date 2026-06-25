@@ -113,6 +113,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.EntityPlaceEvent;
 import org.bukkit.event.entity.EntityPotionEffectEvent;
@@ -366,6 +367,39 @@ public class PlayerEventListener implements Listener {
                 }
             }
         }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onSignChange(SignChangeEvent event) {
+        if (!(event.getBlock().getState() instanceof Sign sign)) {
+            return;
+        }
+        if (!canEditSign(event.getPlayer(), sign, "edit")) {
+            event.setCancelled(true);
+        }
+    }
+
+    private boolean canEditSign(Player eventPlayer, Sign sign, String action) {
+        Location location = BukkitUtil.adapt(sign.getLocation());
+        PlotArea area = location.getPlotArea();
+        if (area == null) {
+            return true;
+        }
+        Plot plot = location.getOwnedPlot();
+        if (plot == null) {
+            return !PlotFlagUtil.isAreaRoadFlagsAndFlagEquals(area, EditSignFlag.class, false)
+                    || eventPlayer.hasPermission(Permission.PERMISSION_ADMIN_INTERACT_ROAD.toString());
+        }
+        BukkitPlayer player = BukkitUtil.adapt(eventPlayer);
+        if (plot.isAdded(player.getUUID())) {
+            return true; // allow for added players
+        }
+        if (!plot.getFlag(EditSignFlag.class)
+                && !eventPlayer.hasPermission(Permission.PERMISSION_ADMIN_INTERACT_OTHER.toString())) {
+            plot.debug(eventPlayer.getName() + " could not " + action + " the sign because of edit-sign = false");
+            return false;
+        }
+        return true;
     }
 
     @EventHandler(ignoreCancelled = true)

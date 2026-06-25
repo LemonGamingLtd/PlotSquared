@@ -26,10 +26,11 @@ import com.plotsquared.core.plot.Plot;
 import com.plotsquared.core.plot.PlotArea;
 import com.plotsquared.core.plot.flag.implementations.EditSignFlag;
 import com.plotsquared.core.util.PlotFlagUtil;
+import io.papermc.paper.event.player.PlayerOpenSignEvent;
 import org.bukkit.block.Sign;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerSignOpenEvent;
 
 /**
  * For events since 1.20.1
@@ -38,31 +39,36 @@ import org.bukkit.event.player.PlayerSignOpenEvent;
 public class PlayerEventListener1201 implements Listener {
 
     @EventHandler(ignoreCancelled = true)
-    @SuppressWarnings({"removal", "UnstableApiUsage"}) // thanks Paper, thanks Spigot
-    public void onPlayerSignOpenEvent(PlayerSignOpenEvent event) {
-        Sign sign = event.getSign();
+    public void onPlayerOpenSignEvent(PlayerOpenSignEvent event) {
+        if (!canEditSign(event.getPlayer(), event.getSign(), "edit")) {
+            event.setCancelled(true);
+        }
+    }
+
+    private boolean canEditSign(Player eventPlayer, Sign sign, String action) {
         Location location = BukkitUtil.adapt(sign.getLocation());
         PlotArea area = location.getPlotArea();
         if (area == null) {
-            return;
+            return true;
         }
         Plot plot = location.getOwnedPlot();
         if (plot == null) {
             if (PlotFlagUtil.isAreaRoadFlagsAndFlagEquals(area, EditSignFlag.class, false)
-                    && !event.getPlayer().hasPermission(Permission.PERMISSION_ADMIN_INTERACT_ROAD.toString())) {
-                event.setCancelled(true);
+                    && !eventPlayer.hasPermission(Permission.PERMISSION_ADMIN_INTERACT_ROAD.toString())) {
+                return false;
             }
-            return;
+            return true;
         }
-        BukkitPlayer player = BukkitUtil.adapt(event.getPlayer());
+        BukkitPlayer player = BukkitUtil.adapt(eventPlayer);
         if (plot.isAdded(player.getUUID())) {
-            return; // allow for added players
+            return true; // allow for added players
         }
         if (!plot.getFlag(EditSignFlag.class)
-                && !event.getPlayer().hasPermission(Permission.PERMISSION_ADMIN_INTERACT_OTHER.toString())) {
-            plot.debug(event.getPlayer().getName() + " could not edit the sign because of edit-sign = false");
-            event.setCancelled(true);
+                && !eventPlayer.hasPermission(Permission.PERMISSION_ADMIN_INTERACT_OTHER.toString())) {
+            plot.debug(eventPlayer.getName() + " could not " + action + " the sign because of edit-sign = false");
+            return false;
         }
+        return true;
     }
 
 }

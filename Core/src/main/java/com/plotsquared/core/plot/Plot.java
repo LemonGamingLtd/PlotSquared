@@ -2660,9 +2660,15 @@ public class Plot {
             Location location = event.getLocationTransformer() == null ? calculatedLocation :
                     Objects.requireNonNullElse(event.getLocationTransformer().apply(calculatedLocation), calculatedLocation);
             if (Settings.Teleport.DELAY == 0 || player.hasPermission("plots.teleport.delay.bypass")) {
-                player.sendMessage(TranslatableCaption.of("teleport.teleported_to_plot"));
-                player.teleport(location, cause);
-                resultConsumer.accept(true);
+                player.teleportAsync(location, cause).whenComplete((teleported, throwable) -> {
+                    if (throwable == null && teleported) {
+                        player.sendMessage(TranslatableCaption.of("teleport.teleported_to_plot"));
+                        resultConsumer.accept(true);
+                    } else {
+                        player.sendMessage(TranslatableCaption.of("teleport.teleport_failed"));
+                        resultConsumer.accept(false);
+                    }
+                });
                 return;
             }
             player.sendMessage(
@@ -2673,15 +2679,19 @@ public class Plot {
             TaskManager.addToTeleportQueue(name);
             TaskManager.runTaskLater(() -> {
                 if (!TaskManager.removeFromTeleportQueue(name)) {
+                    resultConsumer.accept(false);
                     return;
                 }
-                try {
-                    player.sendMessage(TranslatableCaption.of("teleport.teleported_to_plot"));
-                    player.teleport(location, cause);
-                } catch (final Exception ignored) {
-                }
+                player.teleportAsync(location, cause).whenComplete((teleported, throwable) -> {
+                    if (throwable == null && teleported) {
+                        player.sendMessage(TranslatableCaption.of("teleport.teleported_to_plot"));
+                        resultConsumer.accept(true);
+                    } else {
+                        player.sendMessage(TranslatableCaption.of("teleport.teleport_failed"));
+                        resultConsumer.accept(false);
+                    }
+                });
             }, TaskTime.seconds(Settings.Teleport.DELAY));
-            resultConsumer.accept(true);
         };
         if (plot.area.isHomeAllowNonmember() || plot.isAdded(player.getUUID())) {
             plot.getHome(locationConsumer);

@@ -223,7 +223,13 @@ public final class BukkitPlatform extends JavaPlugin implements Listener, PlotPl
         if (this.version == null) {
             try {
                 this.version = new int[3];
-                String[] split = Bukkit.getBukkitVersion().split("-")[0].split("\\.");
+                String versionString;
+                try {
+                    versionString = (String) Bukkit.class.getMethod("getMinecraftVersion").invoke(null);
+                } catch (ReflectiveOperationException ignored) {
+                    versionString = Bukkit.getBukkitVersion();
+                }
+                String[] split = versionString.split("-")[0].split("\\.");
                 this.version[0] = Integer.parseInt(split[0]);
                 this.version[1] = Integer.parseInt(split[1]);
                 if (split.length == 3) {
@@ -365,7 +371,10 @@ public final class BukkitPlatform extends JavaPlugin implements Listener, PlotPl
         if (Settings.Enabled_Components.EVENTS) {
             getServer().getPluginManager().registerEvents(injector().getInstance(PlayerEventListener.class), this);
             if ((serverVersion()[1] == 20 && serverVersion()[2] >= 1) || serverVersion()[1] > 20) {
-                getServer().getPluginManager().registerEvents(injector().getInstance(PlayerEventListener1201.class), this);
+                try {
+                    Class.forName("io.papermc.paper.event.player.PlayerOpenSignEvent");
+                    getServer().getPluginManager().registerEvents(injector().getInstance(PlayerEventListener1201.class), this);
+                } catch (ClassNotFoundException ignored) {}
             }
             getServer().getPluginManager().registerEvents(injector().getInstance(BlockEventListener.class), this);
             if (Settings.HIGH_FREQUENCY_LISTENER) {

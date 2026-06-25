@@ -55,6 +55,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import static com.sk89q.worldedit.world.gamemode.GameModes.ADVENTURE;
 import static com.sk89q.worldedit.world.gamemode.GameModes.CREATIVE;
@@ -225,14 +226,23 @@ public class BukkitPlayer extends PlotPlayer<Player> {
 
     @Override
     public void teleport(final @NonNull Location location, final @NonNull TeleportCause cause) {
+        teleportAsync(location, cause);
+    }
+
+    @Override
+    public @NonNull CompletableFuture<Boolean> teleportAsync(final @NonNull Location location, final @NonNull TeleportCause cause) {
         if (!WorldUtil.isValidLocation(location)) {
-            return;
+            return CompletableFuture.completedFuture(false);
+        }
+        final org.bukkit.World world = BukkitUtil.getWorld(location.getWorldName());
+        if (world == null) {
+            return CompletableFuture.completedFuture(false);
         }
         final org.bukkit.Location bukkitLocation =
-                new org.bukkit.Location(BukkitUtil.getWorld(location.getWorldName()), location.getX() + 0.5,
+                new org.bukkit.Location(world, location.getX() + 0.5,
                         location.getY(), location.getZ() + 0.5, location.getYaw(), location.getPitch()
                 );
-        PaperLib.teleportAsync(player, bukkitLocation, getTeleportCause(cause));
+        return PaperLib.teleportAsync(player, bukkitLocation, getTeleportCause(cause));
     }
 
     @Override
