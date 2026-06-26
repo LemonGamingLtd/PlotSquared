@@ -73,6 +73,7 @@ import com.plotsquared.core.plot.flag.types.BlockTypeWrapper;
 import com.plotsquared.core.plot.world.PlotAreaManager;
 import com.plotsquared.core.util.EventDispatcher;
 import com.plotsquared.core.util.MathMan;
+import com.plotsquared.core.util.MinecraftVersion;
 import com.plotsquared.core.util.PlotFlagUtil;
 import com.plotsquared.core.util.PremiumVerification;
 import com.plotsquared.core.util.entity.EntityCategories;
@@ -218,8 +219,7 @@ public class PlayerEventListener implements Listener {
                 "PINK_DYE",
                 "GLOW_INK_SAC"
         ));
-        int[] version = PlotSquared.platform().serverVersion();
-        if (version[1] >= 20) {
+        if (MinecraftVersion.current().isNewerOrEqualThan(MinecraftVersion.TRAILS_AND_TALES)) {
             mutableDyes.add("HONEYCOMB");
         }
         DYES = Set.copyOf(mutableDyes);
