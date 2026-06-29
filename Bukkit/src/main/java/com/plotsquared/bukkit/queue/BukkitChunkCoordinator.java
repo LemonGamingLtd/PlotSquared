@@ -29,7 +29,6 @@ import com.plotsquared.core.util.task.TaskManager;
 import com.plotsquared.core.util.task.TaskTime;
 import com.sk89q.worldedit.math.BlockVector2;
 import com.sk89q.worldedit.world.World;
-import io.papermc.lib.PaperLib;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bukkit.Bukkit;
@@ -225,8 +224,7 @@ public final class BukkitChunkCoordinator extends ChunkCoordinator {
             // This required PaperLib to be bumped to version 1.0.4 to mark the request as urgent
             final BlockVector2 chunk = this.requestedChunks.poll();
             loadingChunks.incrementAndGet();
-            PaperLib
-                    .getChunkAtAsync(this.bukkitWorld, chunk.getX(), chunk.getZ(), shouldGen, true)
+            this.bukkitWorld.getChunkAtAsync(chunk.getX(), chunk.getZ(), shouldGen, true)
                     .orTimeout(10L, TimeUnit.SECONDS)
                     .whenComplete((chunkObject, throwable) -> {
                         loadingChunks.decrementAndGet();
