@@ -727,7 +727,7 @@ public class PlayerEventListener implements Listener {
                     if (dest != null) {
                         vehicle.eject();
                         vehicle.setVelocity(new Vector(0d, 0d, 0d));
-                        PaperLib.teleportAsync(vehicle, dest);
+                        vehicle.teleportAsync(dest);
                         passengers.forEach(vehicle::addPassenger);
                         return;
                     }

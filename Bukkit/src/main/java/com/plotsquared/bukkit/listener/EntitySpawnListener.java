@@ -99,7 +99,7 @@ public class EntitySpawnListener implements Listener {
                         }
                         try {
                             ignoreTP = true;
-                            PaperLib.teleportAsync(entity, origin);
+                            entity.teleportAsync(origin);
                         } finally {
                             ignoreTP = false;
                         }
