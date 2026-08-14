@@ -1392,6 +1392,13 @@ public class PlayerEventListener implements Listener {
                         break;
                     }
                 }
+                // Unlike other mob buckets, the sulfur cube bucket contains no fluid. Paper therefore does not fire a
+                // PlayerBucketEmptyEvent when it is used, so protect its actual spawn location here instead.
+                if (type.toString().equals("SULFUR_CUBE_BUCKET")) {
+                    location = BukkitUtil.adapt(block.getRelative(event.getBlockFace()).getLocation());
+                    eventType = PlayerBlockEventType.SPAWN_MOB;
+                    break;
+                }
                 if (type.isEdible()) {
                     //Allow all players to eat while also allowing the block place event to be fired
                     return;
