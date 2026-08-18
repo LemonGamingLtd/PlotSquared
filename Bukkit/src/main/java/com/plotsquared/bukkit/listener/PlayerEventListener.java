@@ -1837,7 +1837,7 @@ public class PlayerEventListener implements Listener {
             ItemStack hand = p.getInventory().getItem(event.getHand());
             if (hand != null) {
                 Material handType = hand.getType();
-                boolean isSpawnEgg = PaperLib.isPaper()
+                boolean isSpawnEgg = PaperSupport.isPaper()
                         ? MaterialTags.SPAWN_EGGS.isTagged(handType)
                         : handType.toString().toLowerCase().endsWith("_spawn_egg");
                 if (isSpawnEgg) {
