@@ -125,7 +125,7 @@ public class BukkitRegionManager extends RegionManager {
         if (doWhole) {
             for (Entity entity : entities) {
                 org.bukkit.Location location = entity.getLocation();
-                location.getWorld().getChunkAtAsync(location).thenAccept(chunk -> {
+                PaperSupport.getChunkAtAsync(location).thenAccept(chunk -> {
                     if (chunks.contains(chunk)) {
                         int X = chunk.getX();
                         int Z = chunk.getZ();
