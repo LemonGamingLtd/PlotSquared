@@ -92,6 +92,7 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.text.minimessage.tag.standard.StandardTags;
 import org.bukkit.Bukkit;
 import org.bukkit.FluidCollisionMode;
+import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -1319,6 +1320,47 @@ public class PlayerEventListener implements Listener {
                     }
                 }
             }
+        }
+    }
+
+    // When a use-item packet hits a block that no use-item-on packet targeted first (e.g. the player is aiming at an
+    // entity standing in front of it), Paper fires RIGHT_CLICK_BLOCK with the block use already denied but the item use
+    // still allowed. onInteract ignores cancelled events, so check items that spawn mobs from their use() here.
+    @EventHandler(priority = EventPriority.LOW)
+    @SuppressWarnings("deprecation") // Paper deprecation
+    public void onPreCancelledItemUse(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK || event.useInteractedBlock() != Event.Result.DENY
+                || event.useItemInHand() == Event.Result.DENY) {
+            return;
+        }
+        Block block = event.getClickedBlock();
+        Player player = event.getPlayer();
+        if (block == null || player.getGameMode() == GameMode.SPECTATOR) {
+            return;
+        }
+        BukkitPlayer pp = BukkitUtil.adapt(player);
+        if (pp.getPlotAreaAbs() == null) {
+            return;
+        }
+        Material type = event.getMaterial();
+        Location location;
+        if (type.toString().equals("SULFUR_CUBE_BUCKET")) {
+            location = BukkitUtil.adapt(block.getRelative(event.getBlockFace()).getLocation());
+        } else if (PaperSupport.isPaper()
+                ? MaterialTags.SPAWN_EGGS.isTagged(type)
+                : type.toString().toLowerCase().endsWith("_spawn_egg")) {
+            // Spawn eggs used this way only spawn into the liquid source block their own ray trace hits
+            Block target = player.getTargetBlockExact(5, FluidCollisionMode.SOURCE_ONLY);
+            if (target == null) {
+                return;
+            }
+            location = BukkitUtil.adapt(target.getLocation());
+        } else {
+            return;
+        }
+        if (!this.eventDispatcher.checkPlayerBlockEvent(pp, PlayerBlockEventType.SPAWN_MOB, location, null, true)) {
+            event.setCancelled(true);
+            event.setUseItemInHand(Event.Result.DENY);
         }
     }
 
