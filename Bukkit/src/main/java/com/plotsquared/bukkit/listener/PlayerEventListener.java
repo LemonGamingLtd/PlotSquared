@@ -60,6 +60,7 @@ import com.plotsquared.core.plot.flag.implementations.InteractionInteractFlag;
 import com.plotsquared.core.plot.flag.implementations.ItemDropFlag;
 import com.plotsquared.core.plot.flag.implementations.KeepInventoryFlag;
 import com.plotsquared.core.plot.flag.implementations.LecternReadBookFlag;
+import com.plotsquared.core.plot.flag.implementations.MiscBreakFlag;
 import com.plotsquared.core.plot.flag.implementations.MiscInteractFlag;
 import com.plotsquared.core.plot.flag.implementations.PlayerInteractFlag;
 import com.plotsquared.core.plot.flag.implementations.PreventCreativeCopyFlag;
@@ -85,6 +86,7 @@ import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.util.Enums;
 import com.sk89q.worldedit.world.block.BlockType;
 import com.sk89q.worldedit.world.block.BlockTypes;
+import io.papermc.paper.event.entity.EntityBreakByEntityEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.Tag;
@@ -102,6 +104,7 @@ import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Boat;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Hanging;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.LivingEntity;
@@ -1825,6 +1828,73 @@ public class PlayerEventListener implements Listener {
             }
         } else {
             event.setCancelled(true);
+        }
+    }
+
+    // Block-attached entities that aren't Hanging (cushions since 26.3) only fire Paper's EntityBreakByEntityEvent. A player
+    // breaks one from Player#attack's skipAttackInteraction check, before any damage or attack event, so check it here.
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onEntityBreakByEntity(EntityBreakByEntityEvent event) {
+        Entity entity = event.getEntity();
+        if (entity instanceof Hanging) {
+            // Handled by onHangingBreakByEntity, whose result Paper carries over into this event
+            return;
+        }
+        Location location = BukkitUtil.adapt(entity.getLocation());
+        PlotArea area = location.getPlotArea();
+        if (area == null) {
+            return;
+        }
+        Entity remover = event.getRemover();
+        Player player;
+        if (remover instanceof Player p) {
+            player = p;
+        } else if (remover instanceof Projectile projectile && projectile.getShooter() instanceof Player shooter) {
+            player = shooter;
+        } else {
+            event.setCancelled(true);
+            return;
+        }
+        BukkitPlayer pp = BukkitUtil.adapt(player);
+        Plot plot = area.getPlot(location);
+        if (plot == null) {
+            if (!pp.hasPermission(Permission.PERMISSION_ADMIN_DESTROY_ROAD)) {
+                pp.sendMessage(
+                        TranslatableCaption.of("permission.no_permission_event"),
+                        TagResolver.resolver(
+                                "node",
+                                Tag.inserting(Permission.PERMISSION_ADMIN_DESTROY_ROAD)
+                        )
+                );
+                event.setCancelled(true);
+            }
+        } else if (!plot.hasOwner()) {
+            if (!pp.hasPermission(Permission.PERMISSION_ADMIN_DESTROY_UNOWNED)) {
+                pp.sendMessage(
+                        TranslatableCaption.of("permission.no_permission_event"),
+                        TagResolver.resolver(
+                                "node",
+                                Tag.inserting(Permission.PERMISSION_ADMIN_DESTROY_UNOWNED)
+                        )
+                );
+                event.setCancelled(true);
+            }
+        } else if (!plot.isAdded(pp.getUUID())) {
+            if (plot.getFlag(MiscBreakFlag.class)) {
+                return;
+            }
+            if (!pp.hasPermission(Permission.PERMISSION_ADMIN_DESTROY_OTHER)) {
+                pp.sendMessage(
+                        TranslatableCaption.of("permission.no_permission_event"),
+                        TagResolver.resolver(
+                                "node",
+                                Tag.inserting(Permission.PERMISSION_ADMIN_DESTROY_OTHER)
+                        )
+                );
+                event.setCancelled(true);
+                plot.debug(player.getName() + " could not break " + entity.getType().name().toLowerCase()
+                        + " because misc-break = false");
+            }
         }
     }
 

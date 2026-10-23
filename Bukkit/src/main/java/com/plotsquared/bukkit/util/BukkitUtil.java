@@ -63,6 +63,7 @@ import org.bukkit.entity.Animals;
 import org.bukkit.entity.AreaEffectCloud;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Boss;
+import org.bukkit.entity.Cushion;
 import org.bukkit.entity.EnderCrystal;
 import org.bukkit.entity.EnderSignal;
 import org.bukkit.entity.Entity;
@@ -472,6 +473,7 @@ public class BukkitUtil extends WorldUtil {
                 allowedInterfaces.add(ExperienceOrb.class);
                 allowedInterfaces.add(EnderSignal.class);
                 allowedInterfaces.add(Firework.class);
+                allowedInterfaces.add(Cushion.class);
             }
             case "player" -> allowedInterfaces.add(Player.class);
             case "interaction" -> {
