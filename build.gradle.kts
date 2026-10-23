@@ -79,16 +79,16 @@ subprojects {
 
     plugins.withId("java") {
         the<JavaPluginExtension>().toolchain {
-            languageVersion.set(JavaLanguageVersion.of(21))
+            languageVersion.set(JavaLanguageVersion.of(25))
         }
     }
 
     tasks.compileJava.configure {
-        options.release.set(17)
+        options.release.set(25)
     }
 
     configurations.all {
-        attributes.attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 21)
+        attributes.attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 25)
     }
 
     spotless {
@@ -217,7 +217,7 @@ tasks.getByName<Jar>("jar") {
     enabled = false
 }
 
-val supportedVersions = listOf("1.19.4", "1.20.6", "1.21.11", "26.1.2", "26.2")
+val supportedVersions = listOf("1.19.4", "1.20.6", "1.21.11", "26.1.2", "26.2", "26.3")
 tasks {
     val cacheLatestFaweArtifact = register("cacheLatestFaweArtifact") {
         group = null

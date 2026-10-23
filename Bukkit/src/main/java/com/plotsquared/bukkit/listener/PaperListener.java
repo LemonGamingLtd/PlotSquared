@@ -58,11 +58,11 @@ import org.bukkit.Chunk;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.block.TileState;
+import org.bukkit.entity.AbstractCubeMob;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
-import org.bukkit.entity.Slime;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -125,9 +125,9 @@ public class PaperListener implements Listener {
         if (!Settings.Paper_Components.ENTITY_PATHING) {
             return;
         }
-        Slime slime = event.getEntity();
+        AbstractCubeMob cubeMob = event.getEntity();
 
-        Block b = slime.getTargetBlockExact(4);
+        Block b = cubeMob.getTargetBlockExact(4);
         if (b == null) {
             return;
         }
